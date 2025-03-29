@@ -1,0 +1,116 @@
+from customtkinter import CTk, CTkLabel, CTkEntry, CTkButton, CTkFrame, set_appearance_mode
+import pandas as pd
+import os
+
+# Set appearance mode before creating the app
+set_appearance_mode("light")
+
+# Excel file path
+EXCEL_FILE = r"E:\espresso.xlsx"
+
+# Function to check if the file exists, and create it if not
+def initialize_excel():
+    if not os.path.exists(EXCEL_FILE):
+        df = pd.DataFrame(columns=["Email", "Password"])
+        df.to_excel(EXCEL_FILE, index=False)
+
+# Function to open login window and close registration window
+def open_login_window():
+    global login_window
+    app.destroy()
+    
+    login_window = CTk()
+    login_window.geometry("600x600")  # Fixed size
+    login_window.title("Login")
+    login_window.configure(fg_color="white")
+    
+    frame = CTkFrame(login_window, fg_color="white")
+    frame.pack(fill="both", expand=True, padx=50, pady=50)
+    
+    CTkLabel(frame, text="Login", font=("Impact", 24)).pack(pady=20)
+    
+    email_entry = CTkEntry(frame, placeholder_text="Enter Email", width=300)
+    email_entry.pack(pady=10)
+    
+    password_entry = CTkEntry(frame, placeholder_text="Enter Password", show="*", width=300)
+    password_entry.pack(pady=10)
+    
+    def verify_login():
+        email = email_entry.get()
+        password = password_entry.get()
+        
+        try:
+            df = pd.read_excel(EXCEL_FILE)
+            if ((df["Email"] == email) & (df["Password"] == password)).any():
+                login_window.destroy()
+                open_dashboard()
+            else:
+                CTkLabel(frame, text="Invalid Credentials!", text_color="red").pack()
+        except Exception as e:
+            CTkLabel(frame, text=f"Error: {str(e)}", text_color="red").pack()
+
+    CTkButton(frame, text="Login", fg_color="black", hover_color="navy", command=verify_login, width=300).pack(pady=20)
+    login_window.mainloop()
+
+# Function to open dashboard after login
+def open_dashboard():
+    dashboard = CTk()
+    dashboard.geometry("600x600")  # Fixed size
+    dashboard.title("Dashboard")
+    dashboard.configure(fg_color="white")
+    
+    frame = CTkFrame(dashboard, fg_color="white")
+    frame.pack(fill="both", expand=True, padx=50, pady=50)
+    
+    CTkLabel(frame, text="Welcome!", font=("Impact", 24)).pack(pady=20)
+    dashboard.mainloop()
+
+# Function to handle user registration
+def register():
+    email = username_entry.get()
+    password = password_entry.get()
+    
+    if email and password:
+        try:
+            df = pd.read_excel(EXCEL_FILE)
+            if email in df["Email"].values:
+                result_label.configure(text="User already exists!", text_color="red")
+                return
+            
+            new_user = pd.DataFrame([[email, password]], columns=["Email", "Password"])
+            df = pd.concat([df, new_user], ignore_index=True)
+            df.to_excel(EXCEL_FILE, index=False)
+            
+            open_login_window()
+        except Exception as e:
+            result_label.configure(text=f"Error: {str(e)}", text_color="red")
+    else:
+        result_label.configure(text="Enter both fields!", text_color="red")
+
+# Initialize the Excel file
+initialize_excel()
+
+# Main registration window
+app = CTk()
+app.geometry("600x600")  # Fixed size
+app.title("Register")
+app.configure(fg_color="white")
+
+frame = CTkFrame(app, fg_color="white")
+frame.pack(fill="both", expand=True, padx=50, pady=50)
+
+CTkLabel(frame, text="Create an Account", font=("Impact", 24)).pack(pady=20)
+
+username_entry = CTkEntry(frame, placeholder_text="Enter Email", width=300)
+username_entry.pack(pady=10)
+
+password_entry = CTkEntry(frame, placeholder_text="Enter Password", show="*", width=300)
+password_entry.pack(pady=10)
+
+result_label = CTkLabel(frame, text="", text_color="red")
+result_label.pack()
+
+CTkButton(frame, text="Register", hover_color="navy", fg_color="black", command=register, width=300).pack(pady=10)
+CTkButton(frame, text="Already Registered?", hover_color="navy", fg_color="black", command=open_login_window, width=300).pack(pady=10)
+
+app.mainloop()
